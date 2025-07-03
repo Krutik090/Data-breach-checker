@@ -40,37 +40,34 @@ document.getElementById("contactForm").addEventListener("submit", async (e) => {
 });
 
 // Breach checker with reCAPTCHA
+
 async function searchBreach() {
   const email = document.getElementById("emailInput").value.trim();
   const container = document.getElementById("results-container");
-  container.innerHTML = "";
+  const spinner = document.getElementById("loading");
 
-  if (!email) {
-    alert("Please enter a valid email address.");
-    return;
-  }
+  container.innerHTML = "";
+  if (!email) return showToast("Please enter a valid email address", true);
 
   const token = grecaptcha.getResponse();
-  if (!token) {
-    alert("Please complete the CAPTCHA.");
-    return;
-  }
+  if (!token) return showToast("Please complete the CAPTCHA", true);
+
+  spinner.classList.remove("hidden");
 
   try {
     const response = await fetch("/api/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, token })
+      body: JSON.stringify({ email, token }),
     });
 
     const data = await response.json();
 
-    if (!data.success || data.found === 0 || !data.sources || data.sources.length === 0) {
+    if (!data.success || data.found === 0 || !data.sources?.length) {
       container.innerHTML = `
         <div class="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg text-center fade-in">
-          <strong>${email}</strong> appears to be <span class="font-semibold">SAFE</span>. No breaches found.
-        </div>
-      `;
+          ✅ <strong>${email}</strong> appears to be <span class="font-semibold">SAFE</span>. No breaches found.
+        </div>`;
       return;
     }
 
@@ -79,8 +76,8 @@ async function searchBreach() {
         <p class="text-lg mb-2 text-gray-700"><strong>Leaks found:</strong> <span class="text-pink-custom font-bold">${data.found}</span></p>
         <p class="mb-4 text-gray-700"><strong>Leaked Fields:</strong> ${data.fields.join(', ')}</p>
 
-        <div class="overflow-x-auto">
-          <table class="min-w-full bg-white border border-pink-custom rounded-lg shadow-sm">
+        <div class="overflow-x-auto rounded-lg shadow">
+          <table class="min-w-full bg-white border border-pink-custom rounded-lg overflow-hidden">
             <thead class="bg-pink-custom text-white">
               <tr>
                 <th class="py-3 px-4 text-left">#</th>
@@ -106,10 +103,9 @@ async function searchBreach() {
           </table>
         </div>
 
-        <div class="mt-6 bg-yellow-100 border border-yellow-400 text-yellow-800 px-6 py-4 rounded-lg text-center fade-in">
-          ⚠️ If this data belongs to you and you want it removed, you can 
-          <button onclick="openModal()" class="underline text-pink-custom font-semibold hover:text-pink-700">Contact Us</button> 
-          for a takedown request.
+        <div class="mt-6 mb-4 bg-yellow-100 border border-yellow-400 text-yellow-800 px-6 py-4 rounded-lg text-center fade-in">
+          ⚠️ If this data belongs to you and you want it removed,
+          <button onclick="openModal()" class="underline text-pink-custom font-semibold hover:text-pink-700">Contact Us</button>.
         </div>
       </div>
     `;
@@ -117,12 +113,9 @@ async function searchBreach() {
     container.innerHTML = html;
   } catch (err) {
     console.error(err);
-    container.innerHTML = `
-      <div class="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg text-center fade-in">
-        ❌ Failed to fetch data. Is the backend running?
-      </div>
-    `;
+    showToast("Server error occurred. Try again later.", true);
   } finally {
-    grecaptcha.reset(); // Reset CAPTCHA after use
+    grecaptcha.reset();
+    spinner.classList.add("hidden");
   }
 }

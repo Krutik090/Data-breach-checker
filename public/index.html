@@ -1,40 +1,4 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/png" href="./favicon.ico">
-  <title>Tribastion Email Breach Checker</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="style.css" />
-
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
-</head>
-
-<body class="bg-gray-100 font-sans min-h-screen p-6">
-
-  <h1 class="text-center text-3xl font-bold text-pink-custom mb-6">Tribastion Email Breach Checker</h1>
-  <div class="g-recaptcha mb-4" data-sitekey="YOUR_SITE_KEY_HERE"></div>
-
-  <div class="max-w-xl mx-auto bg-white rounded-xl shadow-md p-6 fade-in">
-    <input type="email" id="emailInput" placeholder="Enter your email (e.g. test@example.com)"
-      class="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg mb-4 focus:outline-none focus:ring-2 focus:ring-pink-500" />
-    <button onclick="searchBreach()"
-      class="w-full bg-pink-custom hover:bg-pink-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300">
-      Search
-    </button>
-  </div>
-
-  <div id="results-container" class="mt-8 max-w-4xl mx-auto fade-in"></div>
-
-  <script src="script.js"></script>
-</body>
-
-</html> -->
-
-
+<!-- 
 <!DOCTYPE html>
 <html lang="en">
 
@@ -65,7 +29,6 @@
   </div>
 
   <div id="results-container" class="mt-8 max-w-4xl mx-auto fade-in"></div>
-  <!-- Contact Modal -->
   <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
     <div class="flex items-center justify-center min-h-screen">
       <div class="bg-white p-6 rounded-xl max-w-lg w-full shadow-lg fade-in relative">
@@ -84,6 +47,78 @@
     </div>
   </div>
 
+
+  <script src="script.js"></script>
+</body>
+
+</html> -->
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="./favicon.ico">
+  <title>Tribastion Email Breach Checker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="bg-gradient-to-br from-gray-100 to-white min-h-screen font-sans">
+
+  <!-- Header -->
+  <header class="text-center py-10">
+    <h1 class="text-4xl font-extrabold text-pink-600 tracking-tight">🔐 Tribastion Breach Checker</h1>
+    <p class="text-gray-600 mt-2 text-lg">Check if your email has been compromised in known data breaches</p>
+  </header>
+
+  <!-- Search Card -->
+  <main class="max-w-xl mx-auto bg-white rounded-3xl shadow-2xl px-8 py-10 fade-in">
+    <div class="mb-6">
+      <input type="email" id="emailInput" placeholder="Enter your email"
+        class="w-full border border-gray-300 rounded-xl px-5 py-3 text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400" />
+    </div>
+
+    <div class="g-recaptcha mb-5" data-sitekey="6LdMxnUrAAAAAP2jt1PCz1j6Q2lyHXyJqlXI4Bvh"></div>
+
+    <button onclick="searchBreach()"
+      class="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3 rounded-xl transition-all duration-200">
+      🔍 Check for Breaches
+    </button>
+  </main>
+
+  <!-- Loading Spinner -->
+  <div id="loading" class="flex justify-center mt-8 hidden">
+    <div class="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent"></div>
+  </div>
+
+  <!-- Results Section -->
+  <section id="results-container" class="mt-10 max-w-4xl mx-auto px-4 fade-in"></section>
+
+  <!-- Contact Modal -->
+  <!-- Keep the contact modal HTML from earlier here -->
+  <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="bg-white p-6 rounded-xl max-w-lg w-full shadow-lg fade-in relative">
+        <button onclick="closeModal()" class="absolute top-2 right-3 text-xl font-bold text-gray-500 hover:text-gray-800">✕</button>
+        <h2 class="text-xl font-bold mb-4 text-pink-custom">Request Takedown / Contact Us</h2>
+        <form id="contactForm" class="space-y-4">
+          <input type="text" id="name" required placeholder="Your Name" class="w-full border rounded-lg px-4 py-2">
+          <input type="email" id="contactEmail" required placeholder="Your Email" class="w-full border rounded-lg px-4 py-2">
+          <textarea id="message" required placeholder="Your message..." class="w-full border rounded-lg px-4 py-2"></textarea>
+          <button type="submit" class="bg-pink-custom text-white px-4 py-2 rounded-lg hover:bg-pink-700">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg hidden z-50"></div>
 
   <script src="script.js"></script>
 </body>

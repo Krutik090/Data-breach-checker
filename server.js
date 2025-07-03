@@ -6,8 +6,9 @@ const app = express();
 const XLSX = require('xlsx');
 const CONTACT_FILE = path.join(__dirname, 'contacts.xlsx');
 const fs = require('fs');
+require('dotenv').config();
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
 
-const RECAPTCHA_SECRET = '6LdMxnUrAAAAAAXP-VB3ediC0-Z7LmPD2Udv6n7N'; // Your reCAPTCHA secret key
 
 app.use(cors());
 app.use(express.json());
