@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -7,40 +7,16 @@
   <link rel="icon" type="image/png" href="./favicon.ico">
   <title>Tribastion Email Breach Checker</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .fade-in {
-      animation: fadeIn 0.6s ease-in-out;
-    }
+  <link rel="stylesheet" href="style.css" />
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .bg-pink-custom {
-      background-color: #ec008c;
-    }
-
-    .text-pink-custom {
-      color: #ec008c;
-    }
-
-    .border-pink-custom {
-      border-color: #ec008c;
-    }
-  </style>
 </head>
 
 <body class="bg-gray-100 font-sans min-h-screen p-6">
 
   <h1 class="text-center text-3xl font-bold text-pink-custom mb-6">Tribastion Email Breach Checker</h1>
+  <div class="g-recaptcha mb-4" data-sitekey="YOUR_SITE_KEY_HERE"></div>
 
   <div class="max-w-xl mx-auto bg-white rounded-xl shadow-md p-6 fade-in">
     <input type="email" id="emailInput" placeholder="Enter your email (e.g. test@example.com)"
@@ -53,78 +29,63 @@
 
   <div id="results-container" class="mt-8 max-w-4xl mx-auto fade-in"></div>
 
-  <script>
-    async function searchBreach() {
-      const email = document.getElementById("emailInput").value.trim();
-      const container = document.getElementById("results-container");
-      container.innerHTML = "";
+  <script src="script.js"></script>
+</body>
 
-      if (!email) {
-        alert("Please enter a valid email address.");
-        return;
-      }
+</html> -->
 
-      const url = `/api/search?email=${encodeURIComponent(email)}`;
 
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
+<!DOCTYPE html>
+<html lang="en">
 
-        if (!data.success || data.found === 0 || !data.sources || data.sources.length === 0) {
-          container.innerHTML = `
-            <div class="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg text-center fade-in">
-              <strong>${email}</strong> appears to be <span class="font-semibold">SAFE</span>. No breaches found.
-            </div>
-          `;
-          return;
-        }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="./favicon.ico">
+  <title>Tribastion Email Breach Checker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
 
-        let html = `
-          <div class="fade-in">
-            <p class="text-lg mb-2 text-gray-700"><strong>Leaks found:</strong> <span class="text-pink-custom font-bold">${data.found}</span></p>
-            <p class="mb-4 text-gray-700"><strong>Leaked Fields:</strong> ${data.fields.join(', ')}</p>
+<body class="bg-gray-100 font-sans min-h-screen p-6">
 
-            <div class="overflow-x-auto">
-              <table class="min-w-full bg-white border border-pink-custom rounded-lg shadow-sm">
-                <thead class="bg-pink-custom text-white">
-                  <tr>
-                    <th class="py-3 px-4 text-left">#</th>
-                    <th class="py-3 px-4 text-left">Source</th>
-                    <th class="py-3 px-4 text-left">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-        `;
+  <h1 class="text-center text-3xl font-bold text-pink-custom mb-6">Tribastion Email Breach Checker</h1>
 
-        data.sources.forEach((source, index) => {
-          html += `
-            <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="py-3 px-4">${index + 1}</td>
-              <td class="py-3 px-4">${source.name}</td>
-              <td class="py-3 px-4">${source.date}</td>
-            </tr>
-          `;
-        });
+  <div class="max-w-xl mx-auto bg-white rounded-xl shadow-md p-6 fade-in">
+    <input type="email" id="emailInput" placeholder="Enter your email (e.g. test@example.com)"
+      class="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg mb-4 focus:outline-none focus:ring-2 focus:ring-pink-500" />
 
-        html += `
-                </tbody>
-              </table>
-            </div>
-          </div>
-        `;
+    <div class="g-recaptcha mb-4" data-sitekey="6LdMxnUrAAAAAP2jt1PCz1j6Q2lyHXyJqlXI4Bvh"></div>
 
-        container.innerHTML = html;
+    <button onclick="searchBreach()"
+      class="w-full bg-pink-custom hover:bg-pink-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300">
+      Search
+    </button>
+  </div>
 
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = `
-          <div class="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg text-center fade-in">
-            ❌ Failed to fetch data. Is the backend running?
-          </div>
-        `;
-      }
-    }
-  </script>
+  <div id="results-container" class="mt-8 max-w-4xl mx-auto fade-in"></div>
+  <!-- Contact Modal -->
+  <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="bg-white p-6 rounded-xl max-w-lg w-full shadow-lg fade-in relative">
+        <button onclick="closeModal()"
+          class="absolute top-2 right-3 text-xl font-bold text-gray-500 hover:text-gray-800">✕</button>
+        <h2 class="text-xl font-bold mb-4 text-pink-custom">Request Takedown / Contact Us</h2>
+        <form id="contactForm" class="space-y-4">
+          <input type="text" id="name" required placeholder="Your Name" class="w-full border rounded-lg px-4 py-2">
+          <input type="email" id="contactEmail" required placeholder="Your Email"
+            class="w-full border rounded-lg px-4 py-2">
+          <textarea id="message" required placeholder="Your message..."
+            class="w-full border rounded-lg px-4 py-2"></textarea>
+          <button type="submit" class="bg-pink-custom text-white px-4 py-2 rounded-lg hover:bg-pink-700">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="script.js"></script>
 </body>
 
 </html>

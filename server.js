@@ -1,27 +1,88 @@
 const express = require('express');
-const cors = require('cors');
-const fetch = require('node-fetch'); // make sure v2
+const fetch = require('node-fetch');
 const path = require('path');
+const cors = require('cors');
 const app = express();
+const XLSX = require('xlsx');
+const CONTACT_FILE = path.join(__dirname, 'contacts.xlsx');
+const fs = require('fs');
+
+const RECAPTCHA_SECRET = '6LdMxnUrAAAAAAXP-VB3ediC0-Z7LmPD2Udv6n7N'; // Your reCAPTCHA secret key
+
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public'))); // serve your HTML file
-app.get('/api/search', async (req, res) => {
-  const { email, username, phone } = req.query;
-  let query = "";
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public'))); // serve frontend files
 
-  if (email) query = `email=${email}`;
-  else return res.status(400).json({ error: "Missing email, username or phone query param." });
+app.post('/api/search', async (req, res) => {
+  const { email, token } = req.body;
 
-  const url = `https://leakcheck.io/api/public?check=${email}`;
+  if (!email || !token) {
+    return res.status(400).json({ success: false, message: 'Missing email or captcha token' });
+  }
 
   try {
-    const response = await fetch(url);
-    const data = await response.json();
+    // ✅ Verify reCAPTCHA
+    const verifyURL = `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`;
+    const captchaRes = await fetch(verifyURL, { method: 'POST' });
+    const captchaData = await captchaRes.json();
+
+    if (!captchaData.success) {
+      return res.status(403).json({ success: false, message: 'Captcha verification failed' });
+    }
+
+    // ✅ Use the actual public LeakCheck API
+    const leakcheckUrl = `https://leakcheck.io/api/public?check=${encodeURIComponent(email)}`;
+
+    const apiRes = await fetch(leakcheckUrl);
+    const data = await apiRes.json();
+
     res.json(data);
-    console.log(data);
+    // console.log('🔍 LeakCheck result:', data);
+
   } catch (err) {
-    res.status(500).json({ error: "Proxy error", details: err.message });
+    console.error('❌ Error during CAPTCHA or search:', err);
+    res.status(500).json({ success: false, message: 'Server error', details: err.message });
   }
 });
 
-app.listen(3000, () => console.log('✅ Proxy running at http://localhost:3000'));
+
+app.post('/api/contact', async (req, res) => {
+  const { name, email, message } = req.body;
+
+  if (!name || !email || !message) {
+    return res.status(400).json({ success: false, message: 'Missing fields' });
+  }
+
+  try {
+    let workbook, worksheet, data = [];
+
+    if (fs.existsSync(CONTACT_FILE)) {
+      workbook = XLSX.readFile(CONTACT_FILE);
+      worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      data = XLSX.utils.sheet_to_json(worksheet);
+    } else {
+      workbook = XLSX.utils.book_new();
+    }
+
+    data.push({
+      Timestamp: new Date().toISOString(),
+      Name: name,
+      Email: email,
+      Message: message
+    });
+
+    const newSheet = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, newSheet, "Contacts", true);
+    XLSX.writeFile(workbook, CONTACT_FILE);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Excel write error:", err);
+    res.status(500).json({ success: false, message: "Internal error" });
+  }
+});
+
+const PORT = process.env.PORT || 5555;
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
+});
