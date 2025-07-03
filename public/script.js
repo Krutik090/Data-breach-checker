@@ -17,12 +17,14 @@ document.getElementById("contactForm").addEventListener("submit", async (e) => {
   const name = document.getElementById("name").value.trim();
   const email = document.getElementById("contactEmail").value.trim();
   const message = document.getElementById("message").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+
 
   try {
     const res = await fetch("/api/contact", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, message })
+      body: JSON.stringify({ name, phone, email, message })
     });
 
     const data = await res.json();

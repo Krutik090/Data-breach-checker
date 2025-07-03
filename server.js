@@ -5,6 +5,8 @@ const cors = require('cors');
 const app = express();
 const XLSX = require('xlsx');
 const CONTACT_FILE = path.join(__dirname, 'contacts.xlsx');
+const SEARCH_LOG_FILE = path.join(__dirname, 'search_logs.xlsx');
+
 const fs = require('fs');
 require('dotenv').config();
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
@@ -30,6 +32,31 @@ app.post('/api/search', async (req, res) => {
     if (!captchaData.success) {
       return res.status(403).json({ success: false, message: 'Captcha verification failed' });
     }
+    try {
+      // ✅ Log the email + timestamp
+      let logData = [];
+      let searchWorkbook;
+
+      if (fs.existsSync(SEARCH_LOG_FILE)) {
+        searchWorkbook = XLSX.readFile(SEARCH_LOG_FILE);
+        const searchSheet = searchWorkbook.Sheets[searchWorkbook.SheetNames[0]];
+        logData = XLSX.utils.sheet_to_json(searchSheet);
+      } else {
+        searchWorkbook = XLSX.utils.book_new();
+      }
+
+      logData.push({
+        Timestamp: new Date().toISOString(),
+        Email: email
+      });
+
+      const updatedSheet = XLSX.utils.json_to_sheet(logData);
+      XLSX.utils.book_append_sheet(searchWorkbook, updatedSheet, 'SearchLogs', true);
+      XLSX.writeFile(searchWorkbook, SEARCH_LOG_FILE);
+    } catch (err) {
+      console.error("Error writing search log:", err);
+    }
+
 
     // ✅ Use the actual public LeakCheck API
     const leakcheckUrl = `https://leakcheck.io/api/public?check=${encodeURIComponent(email)}`;
@@ -48,9 +75,9 @@ app.post('/api/search', async (req, res) => {
 
 
 app.post('/api/contact', async (req, res) => {
-  const { name, email, message } = req.body;
+  const { name, email, phone, message } = req.body;
 
-  if (!name || !email || !message) {
+  if (!name || !email || !phone || !message) {
     return res.status(400).json({ success: false, message: 'Missing fields' });
   }
 
@@ -69,6 +96,7 @@ app.post('/api/contact', async (req, res) => {
       Timestamp: new Date().toISOString(),
       Name: name,
       Email: email,
+      Phone: phone,
       Message: message
     });
 
