@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen p-6 font-sans">
+    <h1 class="text-3xl font-bold text-center text-pink-600 mb-10">📊 Admin Dashboard</h1>
+
+    <!-- Filter Selector -->
+    <div class="flex justify-center mb-6">
+        <select id="dateFilter" class="px-4 py-2 border rounded-lg shadow">
+            <option value="today">Today</option>
+            <option value="week">Last 7 Days</option>
+            <option value="month">Last 30 Days</option>
+            <option value="year">Last Year</option>
+            <option value="all">All Time</option>
+        </select>
+    </div>
+
+    <!-- Chart -->
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-6 mb-10">
+        <canvas id="statsChart" class="w-full h-64"></canvas>
+    </div>
+
+    <!-- Tables -->
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Search Logs -->
+        <div>
+            <h2 class="text-xl font-bold mb-2">🔍 Search Entries</h2>
+            <table id="searchTable" class="display w-full text-sm"></table>
+        </div>
+
+        <!-- Contact Submissions -->
+        <div>
+            <h2 class="text-xl font-bold mb-2">📬 Contact Submissions</h2>
+            <table id="contactTable" class="display w-full text-sm"></table>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            let fullSearchLogs = [];
+            let fullContactLogs = [];
+            let chartInstance = null;
+
+            function filterByTimestamp(logs, filterType) {
+                const now = new Date();
+                return logs.filter(log => {
+                    const ts = log.Timestamp ? new Date(log.Timestamp) : null;
+                    if (!ts) return false;
+                    if (filterType === 'today') {
+                        return ts.toDateString() === now.toDateString();
+                    } else if (filterType === 'week') {
+                        const weekAgo = new Date(now);
+                        weekAgo.setDate(now.getDate() - 7);
+                        return ts >= weekAgo;
+                    } else if (filterType === 'month') {
+                        const monthAgo = new Date(now);
+                        monthAgo.setMonth(now.getMonth() - 1);
+                        return ts >= monthAgo;
+                    } else if (filterType === 'year') {
+                        const yearAgo = new Date(now);
+                        yearAgo.setFullYear(now.getFullYear() - 1);
+                        return ts >= yearAgo;
+                    }
+                    return true; // all
+                });
+            }
+
+            function updateChart(filteredSearch, filteredContact) {
+                const ctx = document.getElementById('statsChart').getContext('2d');
+                if (chartInstance) chartInstance.destroy();
+
+                chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Searches', 'Contact Submissions'],
+                        datasets: [{
+                            label: 'User Activity',
+                            data: [filteredSearch.length, filteredContact.length],
+                            backgroundColor: ['#ec4899', '#6366f1'],
+                            hoverOffset: 6
+                        }]
+                    }
+                });
+            }
+
+            function applyFilter(filterValue) {
+                const filteredSearch = filterByTimestamp(fullSearchLogs, filterValue);
+                const filteredContact = filterByTimestamp(fullContactLogs, filterValue);
+                updateChart(filteredSearch, filteredContact);
+            }
+
+            async function initDashboard() {
+                const res = await fetch('/api/admin/logs');
+                const { searchLogs, contactLogs } = await res.json();
+                fullSearchLogs = searchLogs;
+                fullContactLogs = contactLogs;
+
+                $('#searchTable').DataTable({
+                    data: fullSearchLogs,
+                    columns: [
+                        { title: 'Date', data: 'Date' },
+                        { title: 'Time', data: 'Time' },
+                        { title: 'Email', data: 'Email' }
+                    ],
+                    createdRow: function (row) {
+                        $(row).addClass('text-sm even:bg-gray-50 hover:bg-pink-50');
+                        $('td', row).addClass('px-4 py-2');
+                    },
+                    initComplete: function () {
+                        $('#searchTable_wrapper').addClass('rounded-lg overflow-hidden shadow-md');
+                        $('#searchTable thead').addClass('bg-pink-100 text-pink-800 font-semibold');
+                        $('#searchTable').addClass('min-w-full border rounded-lg');
+                    }
+                });
+
+                $('#contactTable').DataTable({
+                    data: fullContactLogs,
+                    columns: [
+                        { title: 'Date', data: 'Date' },
+                        { title: 'Time', data: 'Time' },
+                        { title: 'Name', data: 'Name' },
+                        { title: 'Email', data: 'Email' },
+                        { title: 'Phone', data: 'Phone' },
+                        { title: 'Message', data: 'Message' }
+                    ],
+                    createdRow: function (row) {
+                        $(row).addClass('text-sm even:bg-gray-50 hover:bg-pink-50');
+                        $('td', row).addClass('px-4 py-2');
+                    },
+                    initComplete: function () {
+                        $('#contactTable_wrapper').addClass('rounded-lg overflow-hidden shadow-md');
+                        $('#contactTable thead').addClass('bg-pink-100 text-pink-800 font-semibold');
+                        $('#contactTable').addClass('min-w-full border rounded-lg');
+                    }
+                });
+
+
+                applyFilter('today');
+            }
+
+            document.getElementById('dateFilter').addEventListener('change', e => {
+                applyFilter(e.target.value);
+            });
+
+            initDashboard();
+        });
+    </script>
+</body>
+
+</html>

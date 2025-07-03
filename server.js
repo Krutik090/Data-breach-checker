@@ -11,7 +11,6 @@ const fs = require('fs');
 require('dotenv').config();
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
 
-
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'))); // serve frontend files
@@ -32,6 +31,7 @@ app.post('/api/search', async (req, res) => {
     if (!captchaData.success) {
       return res.status(403).json({ success: false, message: 'Captcha verification failed' });
     }
+
     try {
       // ✅ Log the email + timestamp
       let logData = [];
@@ -45,8 +45,11 @@ app.post('/api/search', async (req, res) => {
         searchWorkbook = XLSX.utils.book_new();
       }
 
+      const now = new Date();
       logData.push({
-        Timestamp: new Date().toISOString(),
+        Timestamp: now.toISOString(),
+        Date: now.toLocaleDateString(),
+        Time: now.toLocaleTimeString(),
         Email: email
       });
 
@@ -57,7 +60,6 @@ app.post('/api/search', async (req, res) => {
       console.error("Error writing search log:", err);
     }
 
-
     // ✅ Use the actual public LeakCheck API
     const leakcheckUrl = `https://leakcheck.io/api/public?check=${encodeURIComponent(email)}`;
 
@@ -65,14 +67,11 @@ app.post('/api/search', async (req, res) => {
     const data = await apiRes.json();
 
     res.json(data);
-    // console.log('🔍 LeakCheck result:', data);
-
   } catch (err) {
     console.error('❌ Error during CAPTCHA or search:', err);
     res.status(500).json({ success: false, message: 'Server error', details: err.message });
   }
 });
-
 
 app.post('/api/contact', async (req, res) => {
   const { name, email, phone, message } = req.body;
@@ -92,8 +91,11 @@ app.post('/api/contact', async (req, res) => {
       workbook = XLSX.utils.book_new();
     }
 
+    const now = new Date();
     data.push({
-      Timestamp: new Date().toISOString(),
+      Timestamp: now.toISOString(),
+      Date: now.toLocaleDateString(),
+      Time: now.toLocaleTimeString(),
       Name: name,
       Email: email,
       Phone: phone,
@@ -108,6 +110,31 @@ app.post('/api/contact', async (req, res) => {
   } catch (err) {
     console.error("Excel write error:", err);
     res.status(500).json({ success: false, message: "Internal error" });
+  }
+});
+
+app.get('/api/admin/logs', (req, res) => {
+  try {
+    let searchLogs = [], contactLogs = [];
+
+    // Load Search Logs
+    if (fs.existsSync(SEARCH_LOG_FILE)) {
+      const wb1 = XLSX.readFile(SEARCH_LOG_FILE);
+      const ws1 = wb1.Sheets[wb1.SheetNames[0]];
+      searchLogs = XLSX.utils.sheet_to_json(ws1);
+    }
+
+    // Load Contact Logs
+    if (fs.existsSync(CONTACT_FILE)) {
+      const wb2 = XLSX.readFile(CONTACT_FILE);
+      const ws2 = wb2.Sheets[wb2.SheetNames[0]];
+      contactLogs = XLSX.utils.sheet_to_json(ws2);
+    }
+
+    res.json({ searchLogs, contactLogs });
+  } catch (err) {
+    console.error("Error reading logs:", err);
+    res.status(500).json({ error: "Failed to read logs" });
   }
 });
 
